@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Panel - Aplikasi Db</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f1f5f9;
+            color: #0f172a;
+            font-family: system-ui, sans-serif
+        }
+
+        .topbar {
+            background: #0f172a;
+            color: #fff
+        }
+
+        .brand-icon {
+            background: #2563eb;
+            border-radius: 12px;
+            padding: 9px
+        }
+
+        .panel {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px #0f172a0b
+        }
+
+        .table thead th {
+            background: #eff6ff;
+            color: #1e3a8a;
+            border-bottom: 0
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="topbar py-3">
+        <div class="container d-flex align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3"><span class="brand-icon">🛡️</span>
+                <div>
+                    <div class="fw-bold">ADMIN PANEL</div><small class="text-white-50">Aplikasi Database</small>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="small">{{ session.username }} · {{ session.role }}</div>
+                <form method="post" action="{{ url_for('logout') }}"><button
+                        class="btn btn-sm btn-outline-light mt-1">Logout</button></form>
+            </div>
+        </div>
+    </nav>
+    <main class="container py-4 py-md-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}{% for category,message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button
+                type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endwith %}
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Dashboard</h1>
+                <p class="text-secondary mb-0">Kelola akun dan hak akses pengguna.</p>
+            </div>
+            <span class="badge text-bg-primary fs-6">Hak akses: {{ session.role }}</span>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card panel p-3">
+                    <div class="text-secondary small">Total pengguna</div>
+                    <div class="display-6 fw-bold">{{ users|length }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card panel p-3">
+                    <div class="text-secondary small">Status database</div>
+                    <div class="h4 fw-bold text-success mb-0">Terhubung</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card panel p-3">
+                    <div class="text-secondary small">Akun aktif</div>
+                    <div class="h4 fw-bold mb-0">{{ session.username }}</div>
+                </div>
+            </div>
+        </div>
+        {% if session.role == 'admin' %}
+        <div class="card panel p-4 mb-4">
+            <h2 class="h5 fw-bold mb-3">Tambah Pengguna</h2>
+            <form method="post" action="{{ url_for('add_user') }}" class="row g-3">
+                <div class="col-md-4"><label class="form-label">Username</label><input class="form-control"
+                        name="username" minlength="3" required></div>
+                <div class="col-md-4"><label class="form-label">Password</label><input class="form-control"
+                        type="password" name="password" minlength="5" required></div>
+                <div class="col-md-2"><label class="form-label">Hak akses</label><select class="form-select"
+                        name="role">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select></div>
+                <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100">Tambah akun</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        <div class="card panel p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">Daftar Pengguna</h2><span class="text-secondary small">{{ users|length }}
+                    akun</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Hak Akses</th>{% if session.role == 'admin' %}<th class="text-end">Tindakan</th>{% endif
+                            %}
+                        </tr>
+                    </thead>
+                    <tbody>{% for user in users %}<tr>
+                            <td>{{ user.id }}</td>
+                            <td class="fw-semibold">{{ user.username }}</td>
+                            <td><span
+                                    class="badge {{ 'text-bg-primary' if user.role == 'admin' else 'text-bg-secondary' }}">{{
+                                    user.role }}</span></td>
+                            {% if session.role == 'admin' %}<td class="text-end">{% if user.id != session.user_id %}
+                                <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}"
+                                    onsubmit="return confirm('Hapus akun {{ user.username }}?')"><button
+                                        class="btn btn-sm btn-outline-danger">Hapus</button></form>{% else %}<span
+                                    class="text-secondary small">Akun Anda</span>{% endif %}</td>{% endif %}
+                        </tr>{% else %}<tr>
+                            <td colspan="4" class="text-center text-secondary py-4">Belum ada pengguna.</td>
+                        </tr>{% endfor %}</tbody>
+                </table>
+            </div>
+        </div>
+        <p class="text-secondary small mt-4 text-center">Aplikasi Login Database · Python Flask + SQLite</p>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
